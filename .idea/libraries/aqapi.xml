@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="aqapi">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/aqapi.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jmscommon.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jta-1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ojdbc6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
