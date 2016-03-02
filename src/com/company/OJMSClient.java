@@ -6,9 +6,7 @@ import oracle.AQ.AQQueueTableProperty;
 import oracle.jms.*;
 
 import javax.jms.*;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Locale;
 
 public class OJMSClient {
@@ -34,42 +32,41 @@ public class OJMSClient {
         return QCon;
     }
 
+
+
     public static void createQueue(AQjmsSession session, String user, String qTable, String queueName) {
         try {
-            // Create Queue Tables
+            // Create Queue Table
             System.out.println("Creating Queue Table...");
             AQQueueTableProperty qt_prop = new AQQueueTableProperty("SYS.AQ$_JMS_TEXT_MESSAGE");
             AQQueueTable q_table = session.createQueueTable(user, qTable, qt_prop);
             System.out.println("Qtable created");
-
+            session.commit();
             // create a queue
             AQjmsDestinationProperty dest_prop = new AQjmsDestinationProperty();
             Queue queue = session.createQueue(q_table, queueName, dest_prop);
             System.out.println("Queue created");
-
+            session.commit();
             // start the queue
             ((AQjmsDestination) queue).start(session, true, true);
             System.out.println("Queue started");
-
+            session.commit();
         } catch (JMSException | AQException e) {
             e.printStackTrace();
         }
     }
 
     public static void sendMessage(AQjmsSession session, String user, String queueName,String message) {
-
         try {
             Queue queue = session.getQueue(user, queueName);
             MessageProducer producer = session.createProducer(queue);
             TextMessage tMsg = session.createTextMessage(message);
-
             //set properties to msg since axis2 needs this parameters to find the operation
             tMsg.setStringProperty("SOAPAction", "getQuote");
             producer.send(tMsg);
             System.out.println("Sent message = " + tMsg.getText());
-
             producer.close();
-
+            session.commit();
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -80,13 +77,9 @@ public class OJMSClient {
             Queue queue = session.getQueue(user, queueName);
             QueueBrowser browser = session.createBrowser(queue);
             Enumeration enu = browser.getEnumeration();
-            List<String> list = new ArrayList<>();
             while (enu.hasMoreElements()) {
                 TextMessage message = (TextMessage) enu.nextElement();
-                list.add(message.getText());
-            }
-            for (int i = 0; i < list.size(); i++) {
-                System.out.println("Browsed msg " + list.get(i));
+                System.out.println("Browsed msg " + message.getText());
             }
             browser.close();
 
@@ -103,20 +96,23 @@ public class OJMSClient {
             TextMessage msg = (TextMessage) consumer.receive();
             System.out.println("MESSAGE RECEIVED " + msg.getText());
             consumer.close();
+            session.commit();
 
-//            ((AQjmsDestination)queue).stop(session, true, true, true);
-//            ((AQjmsDestination)queue).delete();
-//            ((AQjmsDestination) queue).drop(session);
         } catch (JMSException e) {
             e.printStackTrace();
         }
+//        try {
+//            Thread.sleep(100);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public static void dropAQTable(AQjmsSession session, String user, String qTable) {
         try {
             AQQueueTable q_table = session.getQueueTable (user, qTable);
             q_table.drop(true);
-            System.out.println("Table " + user + "." + qTable + "has been dropped successfully");
+            System.out.println("Table " + user + "." + qTable + " has been dropped successfully");
         } catch (JMSException | AQException e) {
             e.printStackTrace();
         }
@@ -124,21 +120,30 @@ public class OJMSClient {
 
     public static void main(String[] args) {
         String userName = "jmsuser";
-        String queue = "sample_aq";
+        String queueName = "sample_aq";
         String qTable = "sample_aqtbl";
 
         try {
             QueueConnection connection = getConnection();
-            AQjmsSession session = (AQjmsSession) connection.createQueueSession(false, Session.CLIENT_ACKNOWLEDGE);
+            AQjmsSession session = (AQjmsSession) connection.createQueueSession(true, Session.CLIENT_ACKNOWLEDGE);
             connection.start();
 
 //            dropAQTable(session, userName, qTable);
-//            createQueue(session, userName, qTable, queue);
-//            for (int i = 0; i < 10; i++)
-                sendMessage(session, userName, queue,"<user>text" + 123 + "</user>");
-//            browseMessage(session, userName, queue);
-//            consumeMessage(session, userName, queue);
+//            createQueue(session, userName, qTable, queueName);
 
+            new Consumer().run(session, userName, queueName);
+
+
+
+            for (int i = 0; i < 100; i++) sendMessage(session, userName, queueName,"<user>text" + i + "</user>");
+
+//            browseMessage(session, userName, queueName);
+//            for (int i = 0; i < 110; i++) consumeMessage(session, userName, queueName);
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             session.close();
             connection.close();
         } catch (JMSException e) {
