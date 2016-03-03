@@ -32,28 +32,31 @@ public class OJMSClient {
         return QCon;
     }
 
-
-
-    public static void createQueue(AQjmsSession session, String user, String qTable, String queueName) {
+    public static AQQueueTable createQueueTable(AQjmsSession session, String userName, String queueTableName) {
+        AQQueueTable queueTable = null;
         try {
-            // Create Queue Table
-            System.out.println("Creating Queue Table...");
-            AQQueueTableProperty qt_prop = new AQQueueTableProperty("SYS.AQ$_JMS_TEXT_MESSAGE");
-            AQQueueTable q_table = session.createQueueTable(user, qTable, qt_prop);
-            System.out.println("Qtable created");
+            AQQueueTableProperty queueTableProperty = new AQQueueTableProperty("SYS.AQ$_JMS_TEXT_MESSAGE");
+            queueTable = session.createQueueTable(userName, queueTableName, queueTableProperty);
+            System.out.println("Queue Table \"" + queueTableName + "\" has been created");
             session.commit();
-            // create a queue
-            AQjmsDestinationProperty dest_prop = new AQjmsDestinationProperty();
-            Queue queue = session.createQueue(q_table, queueName, dest_prop);
-            System.out.println("Queue created");
-            session.commit();
-            // start the queue
-            ((AQjmsDestination) queue).start(session, true, true);
-            System.out.println("Queue started");
-            session.commit();
-        } catch (JMSException | AQException e) {
+        } catch (AQException | JMSException e) {
             e.printStackTrace();
         }
+        return queueTable;
+    }
+
+    public static Queue createQueue(AQjmsSession session, AQQueueTable queueTable, String queueName) {
+        Queue queue = null;
+        try {
+            AQjmsDestinationProperty dest_prop = new AQjmsDestinationProperty();
+            queue = session.createQueue(queueTable, queueName, dest_prop);
+            ((AQjmsDestination) queue).start(session, true, true);
+            System.out.println("Queue \"" + queue.getQueueName() +"\" has been created and started");
+            session.commit();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+        return queue;
     }
 
     public static void sendMessage(AQjmsSession session, String user, String queueName,String message) {
@@ -112,7 +115,7 @@ public class OJMSClient {
         try {
             AQQueueTable q_table = session.getQueueTable (user, qTable);
             q_table.drop(true);
-            System.out.println("Table " + user + "." + qTable + " has been dropped successfully");
+            System.out.println("Table \"" + user + "." + qTable + "\" has been dropped successfully");
         } catch (JMSException | AQException e) {
             e.printStackTrace();
         }
@@ -121,21 +124,20 @@ public class OJMSClient {
     public static void main(String[] args) {
         String userName = "jmsuser";
         String queueName = "sample_aq";
-        String qTable = "sample_aqtbl";
+        String queueTableName = "sample_aqtbl";
 
         try {
             QueueConnection connection = getConnection();
             AQjmsSession session = (AQjmsSession) connection.createQueueSession(true, Session.CLIENT_ACKNOWLEDGE);
             connection.start();
 
-//            dropAQTable(session, userName, qTable);
-//            createQueue(session, userName, qTable, queueName);
+//            dropAQTable(session, userName, queueTableName);
 
-            new Consumer().run(session, userName, queueName);
+//            AQQueueTable queueTable = createQueueTable(session, userName, queueTableName);
+//            Queue queue = createQueue(session, queueTable, queueName);
 
-
-
-            for (int i = 0; i < 100; i++) sendMessage(session, userName, queueName,"<user>text" + i + "</user>");
+//            new Consumer().run(session, userName, queueName);
+//            for (int i = 0; i < 100; i++) sendMessage(session, userName, queueName,"<user>text" + i + "</user>");
 
 //            browseMessage(session, userName, queueName);
 //            for (int i = 0; i < 110; i++) consumeMessage(session, userName, queueName);
