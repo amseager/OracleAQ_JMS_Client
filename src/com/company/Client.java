@@ -2,52 +2,70 @@ package com.company;
 
 import oracle.jms.AQjmsSession;
 
-import javax.jms.*;
+import javax.jms.JMSException;
+import javax.jms.QueueConnection;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Client extends JPanel{
-    private JButton sendButton;
-    private JButton asyncReceiveButton;
+    private JButton btnSend;
+    private JButton btnAsyncReceive;
     private JPanel mainPanel;
     private JScrollPane output;
-    private JButton syncReceiveButton;
+    private JButton btnSyncReceive;
+    private JButton btnDrop;
+    private JTextField txtTable;
+    private JTextField txtQueue;
+    private JLabel lblTable;
+    private JLabel lblQueue;
+    private JButton btnCreateTable;
+    private JButton btnCreateQueue;
+    private JTextField txtUser;
+    private JLabel lblHost;
+    private JTextField txtHost;
+    private JLabel lblPort;
+    private JTextField txtPort;
+    private JLabel lblPassword;
+    private JPasswordField txtPassword;
+    private JLabel lblSid;
+    private JTextField txtSid;
+    private JTextField txtDriver;
+    private JLabel lblDriver;
+    private JLabel lblUser;
 
-    private AQjmsSession session;
-    private String userName = "jmsuser";
-    private String queueName = "sample_aq";
-    private String queueTableName = "sample_aqtbl";
+    private static QueueConnection connection;
+    private static AQjmsSession session;
 
     public Client() {
+
         try {
-            QueueConnection connection = OJMSClient.getConnection();
-            this.session = (AQjmsSession) connection.createQueueSession(true, Session.CLIENT_ACKNOWLEDGE);
+            connection = OJMSClient.getConnection(
+                    txtHost.getText(),
+                    txtSid.getText(),
+                    Integer.parseInt(txtPort.getText()),
+                    txtDriver.getText(),
+                    txtUser.getText(),
+                    String.valueOf(txtPassword.getPassword())
+            );
             connection.start();
+            session = OJMSClient.getSession(connection);
+
         } catch (JMSException e) {
             e.printStackTrace();
         }
 
-        sendButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                OJMSClient.sendMessage(session, userName, queueName,"<user>text</user>");
-            }
-        });
+        btnCreateTable.addActionListener(e -> OJMSClient.createTable(session, txtUser.getText(), txtTable.getText()));
 
-        asyncReceiveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new AsyncConsumer().run(session, userName, queueName);
-            }
-        });
+        btnCreateQueue.addActionListener(e -> OJMSClient.createQueue(session, txtUser.getText(), txtTable.getText(), txtQueue.getText()));
 
-        syncReceiveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                OJMSClient.consumeMessage(session, userName, queueName);
-            }
-        });
+        btnDrop.addActionListener(e -> OJMSClient.dropQueueTable(session, txtUser.getText(), txtTable.getText()));
+
+        btnSend.addActionListener(e -> OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(),"<user>text</user>"));
+
+        btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
+
+        btnSyncReceive.addActionListener(e -> OJMSClient.consumeMessage(session, txtUser.getText(), txtQueue.getText()));
     }
 
 
@@ -55,7 +73,19 @@ public class Client extends JPanel{
         JFrame frame = new JFrame("Client");
         frame.setContentPane(new Client().mainPanel);
         frame.setAlwaysOnTop(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try {
+                    session.close();
+                    connection.close();
+                } catch (JMSException e1) {
+                    e1.printStackTrace();
+                }
+                super.windowClosing(e);
+            }
+        });
         frame.setLocationRelativeTo(null);
         frame.pack();
         frame.setVisible(true);
@@ -68,4 +98,5 @@ public class Client extends JPanel{
             }
         });
     }
+
 }
