@@ -6,8 +6,11 @@ import oracle.AQ.AQQueueTableProperty;
 import oracle.jms.*;
 
 import javax.jms.*;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Locale;
+import java.util.Properties;
 
 public class OJMSClient {
 
@@ -24,6 +27,14 @@ public class OJMSClient {
         try {
             // get connection factory , not going through JNDI here
             QFac = AQjmsFactory.getQueueConnectionFactory(hostname, oracle_sid, portno, driver);
+
+//            String url = "jdbc:oracle:thin:@localhost:1521:xe";
+//            Properties props = new Properties();
+//            props.put("user", "sys");
+//            props.put("password", "");
+//            props.put("internal_logon", "sysdba");
+//            QFac = AQjmsFactory.getQueueConnectionFactory(url, props);
+
             // create connection
             QCon = QFac.createQueueConnection(userName, password);
         } catch (JMSException e) {
@@ -59,9 +70,9 @@ public class OJMSClient {
         return queue;
     }
 
-    public static void sendMessage(AQjmsSession session, String user, String queueName,String message) {
+    public static void sendMessage(AQjmsSession session, String userName, String queueName,String message) {
         try {
-            Queue queue = session.getQueue(user, queueName);
+            Queue queue = session.getQueue(userName, queueName);
             MessageProducer producer = session.createProducer(queue);
             TextMessage tMsg = session.createTextMessage(message);
             //set properties to msg since axis2 needs this parameters to find the operation
@@ -75,9 +86,9 @@ public class OJMSClient {
         }
     }
 
-    public static void browseMessage(AQjmsSession session, String user, String queueName) {
+    public static void browseMessage(AQjmsSession session, String userName, String queueName) {
         try {
-            Queue queue = session.getQueue(user, queueName);
+            Queue queue = session.getQueue(userName, queueName);
             QueueBrowser browser = session.createBrowser(queue);
             Enumeration enu = browser.getEnumeration();
             while (enu.hasMoreElements()) {
@@ -92,12 +103,12 @@ public class OJMSClient {
 
     }
 
-    public static void consumeMessage(AQjmsSession session, String user, String queueName) {
+    public static void consumeMessage(AQjmsSession session, String userName, String queueName) {
         try {
-            Queue queue = session.getQueue(user, queueName);
+            Queue queue = session.getQueue(userName, queueName);
             MessageConsumer consumer = session.createConsumer(queue);
             TextMessage msg = (TextMessage) consumer.receive();
-            System.out.println("MESSAGE RECEIVED " + msg.getText());
+            System.out.println("ONE MESSAGE RECEIVED " + msg.getText());
             consumer.close();
             session.commit();
 
@@ -136,16 +147,16 @@ public class OJMSClient {
 //            AQQueueTable queueTable = createQueueTable(session, userName, queueTableName);
 //            Queue queue = createQueue(session, queueTable, queueName);
 
-//            new Consumer().run(session, userName, queueName);
+//            new AsyncConsumer().run(session, userName, queueName);
 //            for (int i = 0; i < 100; i++) sendMessage(session, userName, queueName,"<user>text" + i + "</user>");
 
 //            browseMessage(session, userName, queueName);
 //            for (int i = 0; i < 110; i++) consumeMessage(session, userName, queueName);
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                Thread.sleep(3000);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
             session.close();
             connection.close();
         } catch (JMSException e) {

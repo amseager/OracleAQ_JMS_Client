@@ -4,7 +4,7 @@ import oracle.jms.AQjmsSession;
 
 import javax.jms.*;
 
-public class Consumer implements MessageListener {
+public class AsyncConsumer implements MessageListener {
 
     private AQjmsSession session;
 
