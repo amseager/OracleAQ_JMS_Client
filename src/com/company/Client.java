@@ -5,6 +5,8 @@ import oracle.jms.AQjmsSession;
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -12,7 +14,6 @@ public class Client extends JPanel{
     private JButton btnSend;
     private JButton btnAsyncReceive;
     private JPanel mainPanel;
-    private JScrollPane output;
     private JButton btnSyncReceive;
     private JButton btnDrop;
     private JTextField txtTable;
@@ -33,27 +34,56 @@ public class Client extends JPanel{
     private JTextField txtDriver;
     private JLabel lblDriver;
     private JLabel lblUser;
+    private JTabbedPane tabbedPane1;
+    private JButton btnConnect;
+    private JButton btnDisconnect;
+    private JPanel pnlConnection;
 
     private static QueueConnection connection;
     private static AQjmsSession session;
 
+    public static void switchState(JComponent... fields) {
+        for (JComponent field: fields) {
+            field.setEnabled(!field.isEnabled());
+        }
+    }
+
     public Client() {
 
-        try {
-            connection = OJMSClient.getConnection(
-                    txtHost.getText(),
-                    txtSid.getText(),
-                    Integer.parseInt(txtPort.getText()),
-                    txtDriver.getText(),
-                    txtUser.getText(),
-                    String.valueOf(txtPassword.getPassword())
-            );
-            connection.start();
-            session = OJMSClient.getSession(connection);
-
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+        btnConnect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    connection = OJMSClient.getConnection(
+                            txtHost.getText(),
+                            txtSid.getText(),
+                            Integer.parseInt(txtPort.getText()),
+                            txtDriver.getText(),
+                            txtUser.getText(),
+                            String.valueOf(txtPassword.getPassword())
+                    );
+                    connection.start();
+                    session = OJMSClient.getSession(connection);
+                } catch (JMSException e1) {
+                    e1.printStackTrace();
+                }
+                System.out.println("Connected successfully");
+                switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
+            }
+        });
+        btnDisconnect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    session.close();
+                    connection.close();
+                } catch (JMSException e1) {
+                    e1.printStackTrace();
+                }
+                System.out.println("Disconnected");
+                switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
+            }
+        });
 
         btnCreateTable.addActionListener(e -> OJMSClient.createTable(session, txtUser.getText(), txtTable.getText()));
 

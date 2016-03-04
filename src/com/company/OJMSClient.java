@@ -23,6 +23,16 @@ public class OJMSClient {
         return queueConnection;
     }
 
+    public static AQjmsSession getSession(QueueConnection connection) {
+        AQjmsSession session = null;
+        try {
+            session = (AQjmsSession) connection.createQueueSession(true, Session.CLIENT_ACKNOWLEDGE);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+        return session;
+    }
+
     public static QueueConnection getConnection() {
         Locale.setDefault(Locale.ENGLISH);
         String hostname = "localhost";
@@ -136,15 +146,6 @@ public class OJMSClient {
         }
     }
 
-    public static AQjmsSession getSession(QueueConnection connection) {
-        AQjmsSession session = null;
-        try {
-            session = (AQjmsSession) connection.createQueueSession(true, Session.CLIENT_ACKNOWLEDGE);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
-        return session;
-    }
 
     public static void main(String[] args) {
         String userName = "jmsuser";
