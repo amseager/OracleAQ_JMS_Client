@@ -38,9 +38,12 @@ public class Client extends JPanel{
     private JButton btnConnect;
     private JButton btnDisconnect;
     private JPanel pnlConnection;
+    private JButton btnBrowse;
+    private JTextArea textArea1;
 
     private static QueueConnection connection;
     private static AQjmsSession session;
+    private static boolean isConnected = false;
 
     public static void switchState(JComponent... fields) {
         for (JComponent field: fields) {
@@ -64,6 +67,7 @@ public class Client extends JPanel{
                     );
                     connection.start();
                     session = OJMSClient.getSession(connection);
+                    isConnected = true;
                 } catch (JMSException e1) {
                     e1.printStackTrace();
                 }
@@ -77,6 +81,7 @@ public class Client extends JPanel{
                 try {
                     session.close();
                     connection.close();
+                    isConnected = false;
                 } catch (JMSException e1) {
                     e1.printStackTrace();
                 }
@@ -93,6 +98,13 @@ public class Client extends JPanel{
 
         btnSend.addActionListener(e -> OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(),"<user>text</user>"));
 
+        btnBrowse.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
+            }
+        });
+
         btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
 
         btnSyncReceive.addActionListener(e -> OJMSClient.consumeMessage(session, txtUser.getText(), txtQueue.getText()));
@@ -108,8 +120,10 @@ public class Client extends JPanel{
             @Override
             public void windowClosing(WindowEvent e) {
                 try {
-                    session.close();
-                    connection.close();
+                    if (isConnected) {
+                        session.close();
+                        connection.close();
+                    }
                 } catch (JMSException e1) {
                     e1.printStackTrace();
                 }
