@@ -1,5 +1,7 @@
-package com.company;
+package com.company.Forms;
 
+import com.company.AsyncConsumer;
+import com.company.OJMSClient;
 import oracle.jms.AQjmsSession;
 
 import javax.jms.JMSException;
@@ -10,7 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class Client extends JPanel{
+public class ClientForm extends JPanel{
     private JButton btnSend;
     private JButton btnAsyncReceive;
     private JPanel mainPanel;
@@ -52,7 +54,7 @@ public class Client extends JPanel{
         }
     }
 
-    public Client() {
+    public ClientForm() {
 
         btnConnect.addActionListener(new ActionListener() {
             @Override
@@ -94,7 +96,9 @@ public class Client extends JPanel{
         btnCreateUser.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                SysPasswordForm uc = new SysPasswordForm();
+                uc.pack();
+                uc.setVisible(true);
             }
         });
 
@@ -116,7 +120,7 @@ public class Client extends JPanel{
 
     private static void createAndShowGUI() {
         JFrame frame = new JFrame("Client");
-        frame.setContentPane(new Client().mainPanel);
+        frame.setContentPane(new ClientForm().mainPanel);
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
