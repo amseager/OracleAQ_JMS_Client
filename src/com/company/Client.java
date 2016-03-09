@@ -40,6 +40,7 @@ public class Client extends JPanel{
     private JPanel pnlConnection;
     private JButton btnBrowse;
     private JTextArea textArea1;
+    private JButton btnCreateUser;
 
     private static QueueConnection connection;
     private static AQjmsSession session;
@@ -90,6 +91,13 @@ public class Client extends JPanel{
             }
         });
 
+        btnCreateUser.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
         btnCreateTable.addActionListener(e -> OJMSClient.createTable(session, txtUser.getText(), txtTable.getText()));
 
         btnCreateQueue.addActionListener(e -> OJMSClient.createQueue(session, txtUser.getText(), txtTable.getText(), txtQueue.getText()));
@@ -98,12 +106,7 @@ public class Client extends JPanel{
 
         btnSend.addActionListener(e -> OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(),"<user>text</user>"));
 
-        btnBrowse.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
-            }
-        });
+        btnBrowse.addActionListener(e -> OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText()));
 
         btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
 
