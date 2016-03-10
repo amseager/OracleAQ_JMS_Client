@@ -185,18 +185,6 @@ public class ClientForm extends JPanel {
             }
         });
 
-//        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
-//        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKeyStroke, "ESCAPE");
-//        frame.getRootPane().getActionMap().put("ESCAPE", new AbstractAction() {
-//            public void actionPerformed(ActionEvent e) {
-//                SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
-//                saveSettingsForm.setLocationRelativeTo(null);
-//                saveSettingsForm.setAlwaysOnTop(true);
-//                saveSettingsForm.pack();
-//                saveSettingsForm.setVisible(true);
-//            }
-//        });
-
         frame.setLocationRelativeTo(null);
         frame.pack();
         frame.setVisible(true);
