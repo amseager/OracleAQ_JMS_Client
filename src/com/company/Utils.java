@@ -1,5 +1,7 @@
 package com.company;
 
+import com.company.Forms.ClientForm;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -25,21 +27,14 @@ public class Utils {
         }
     }
 
-    public static Connection connectAsSys(String password) {
+    public static Connection connectAsSys(String password) throws SQLException {
         Locale.setDefault(Locale.ENGLISH);
         String url = "jdbc:oracle:thin:@localhost:1521:XE";
         Properties props = new Properties();
         props.put("user", "sys");
         props.put("password", password);
         props.put("internal_logon", "sysdba");
-        java.sql.Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(url, props);
-            System.out.println("Connected as SYS");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return connection;
+        return DriverManager.getConnection(url, props);
     }
 
     public static Connection getConnection() throws ClassNotFoundException, SQLException {
@@ -79,12 +74,13 @@ public class Utils {
         return QCon;
     }
 
-    public static void main(String[] args) {
-        sysConnection = connectAsSys("123");
-        createUser(sysConnection, "jmsuser", "jmsuser");
+
+//    public static void main(String[] args) {
+//        sysConnection = connectAsSys("123");
+//        createUser(sysConnection, "jmsuser", "jmsuser");
 
 //        AQjmsSession session = (AQjmsSession) connection.createSession(true, Session.CLIENT_ACKNOWLEDGE);
         //session.grantSystemPrivilege("MANAGE_ANY", "jmsuser", false);
         //connection.start();
-    }
+//    }
 }

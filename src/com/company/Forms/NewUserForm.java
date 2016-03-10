@@ -1,9 +1,10 @@
 package com.company.Forms;
 
-import com.company.Utils;
-
 import javax.swing.*;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class NewUserForm extends JDialog {
     private JPanel contentPane;
@@ -14,12 +15,17 @@ public class NewUserForm extends JDialog {
     private JLabel lblUserName;
     private JLabel lblPassword;
 
-    public NewUserForm() {
+    private Connection sysConnection;
+
+    public NewUserForm(Connection sysConnection) {
+        this.sysConnection = sysConnection;
+
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
         this.setLocationRelativeTo(null);
         this.setAlwaysOnTop(true);
+        this.setTitle("Create new user");
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -49,21 +55,27 @@ public class NewUserForm extends JDialog {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    private void createUser(Connection sysConnection, String userName, String password) {
+        try {
+            Statement statement = sysConnection.createStatement();
+            statement.execute("Grant connect, resource TO " + userName + " IDENTIFIED BY " + password);
+            statement.execute("Grant aq_user_role TO " + userName);
+            statement.execute("Grant execute ON sys.dbms_aqadm TO " + userName);
+            statement.execute("Grant execute ON sys.dbms_aq TO " + userName);
+            statement.execute("Grant execute ON sys.dbms_aqin TO " + userName);
+            statement.execute("Grant execute ON sys.dbms_aqjms TO " + userName);
+            System.out.println("User " + userName + " has been created");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void onOK() {
-// add your code here
-        Utils.createUser(Utils.sysConnection, txtUserName.getText(), String.valueOf(txtPassword.getPassword()));
+        createUser(sysConnection, txtUserName.getText(), String.valueOf(txtPassword.getPassword()));
         dispose();
     }
 
     private void onCancel() {
-// add your code here if necessary
         dispose();
-    }
-
-    public static void main(String[] args) {
-        NewUserForm dialog = new NewUserForm();
-        dialog.pack();
-        dialog.setVisible(true);
-        System.exit(0);
     }
 }

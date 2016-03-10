@@ -96,7 +96,11 @@ public class ClientForm extends JPanel{
         btnCreateUser.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SysPasswordForm uc = new SysPasswordForm();
+                SysPasswordForm uc = new SysPasswordForm(
+                        txtHost.getText(),
+                        txtSid.getText(),
+                        txtPort.getText(),
+                        txtDriver.getText());
                 uc.pack();
                 uc.setVisible(true);
             }
