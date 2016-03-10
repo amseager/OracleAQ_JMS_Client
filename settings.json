@@ -1,0 +1,13 @@
+{
+  "userName": "jmsuser",
+  "password": "jmsuser",
+  "host": "localhost",
+  "port": "1521",
+  "sid": "xe",
+  "driver": "thin",
+  "defaultSysPassword": "123",
+  "defaultUserName": "jmsuser",
+  "defaultPassword": "jmsuser",
+  "queueTable": "sample_aqtbl",
+  "queueName": "sample_aq"
+}

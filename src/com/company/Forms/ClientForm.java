@@ -1,18 +1,16 @@
 package com.company.Forms;
 
 import com.company.AsyncConsumer;
+import com.company.JsonSettings;
 import com.company.OJMSClient;
 import oracle.jms.AQjmsSession;
 
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
-public class ClientForm extends JPanel{
+public class ClientForm extends JPanel {
     private JButton btnSend;
     private JButton btnAsyncReceive;
     private JPanel mainPanel;
@@ -48,13 +46,10 @@ public class ClientForm extends JPanel{
     private static AQjmsSession session;
     private static boolean isConnected = false;
 
-    public static void switchState(JComponent... fields) {
-        for (JComponent field: fields) {
-            field.setEnabled(!field.isEnabled());
-        }
-    }
+    private String jsonFilePath = "settings.json";
 
     public ClientForm() {
+        loadPreviousOrDefaultSettings();
 
         btnConnect.addActionListener(new ActionListener() {
             @Override
@@ -76,6 +71,7 @@ public class ClientForm extends JPanel{
                 }
                 System.out.println("Connected successfully");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
+                JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
             }
         });
         btnDisconnect.addActionListener(new ActionListener() {
@@ -119,14 +115,61 @@ public class ClientForm extends JPanel{
         btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
 
         btnSyncReceive.addActionListener(e -> OJMSClient.consumeMessage(session, txtUser.getText(), txtQueue.getText()));
+
     }
 
+    public static void switchState(JComponent... fields) {
+        for (JComponent field: fields) {
+            field.setEnabled(!field.isEnabled());
+        }
+    }
+
+    private void loadPreviousOrDefaultSettings() {
+        JsonSettings settings = JsonSettings.loadSettings(this.jsonFilePath);
+        this.txtQueue.setText(settings.queueName);
+        this.txtTable.setText(settings.queueTable);
+        this.txtUser.setText(settings.userName);
+        this.txtPassword.setText(settings.password);
+        this.txtHost.setText(settings.host);
+        this.txtPort.setText(settings.port);
+        this.txtSid.setText(settings.sid);
+        this.txtDriver.setText(settings.driver);
+    }
+
+    public void saveSettings() {
+        JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
+    }
+
+    private JsonSettings getCurrentSettings() {
+        JsonSettings settings = new JsonSettings();
+        settings.queueName = this.txtQueue.getText();
+        settings.queueTable = this.txtTable.getText();
+        settings.userName = this.txtUser.getText();
+        settings.password = String.valueOf(this.txtPassword.getPassword());
+        settings.host = this.txtHost.getText();
+        settings.port = this.txtPort.getText();
+        settings.sid = this.txtSid.getText();
+        settings.driver = this.txtDriver.getText();
+        return settings;
+    }
 
     private static void createAndShowGUI() {
+        ClientForm clientForm = new ClientForm();
         JFrame frame = new JFrame("Client");
-        frame.setContentPane(new ClientForm().mainPanel);
+        frame.setContentPane(clientForm.mainPanel);
+
         frame.setAlwaysOnTop(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
+                saveSettingsForm.setLocationRelativeTo(null);
+                saveSettingsForm.setAlwaysOnTop(true);
+                saveSettingsForm.pack();
+                saveSettingsForm.setVisible(true);
+            }
+        });
+
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -141,6 +184,19 @@ public class ClientForm extends JPanel{
                 super.windowClosing(e);
             }
         });
+
+//        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+//        frame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(escapeKeyStroke, "ESCAPE");
+//        frame.getRootPane().getActionMap().put("ESCAPE", new AbstractAction() {
+//            public void actionPerformed(ActionEvent e) {
+//                SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
+//                saveSettingsForm.setLocationRelativeTo(null);
+//                saveSettingsForm.setAlwaysOnTop(true);
+//                saveSettingsForm.pack();
+//                saveSettingsForm.setVisible(true);
+//            }
+//        });
+
         frame.setLocationRelativeTo(null);
         frame.pack();
         frame.setVisible(true);
