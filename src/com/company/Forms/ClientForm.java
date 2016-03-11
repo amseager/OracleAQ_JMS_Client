@@ -153,20 +153,33 @@ public class ClientForm extends JPanel {
         return settings;
     }
 
+    private static void openSaveSettingsForm(ClientForm clientForm, JFrame frame) {
+        SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
+        saveSettingsForm.setLocationRelativeTo(null);
+        saveSettingsForm.setAlwaysOnTop(true);
+        saveSettingsForm.pack();
+        saveSettingsForm.setVisible(true);
+    }
+
     private static void createAndShowGUI() {
         ClientForm clientForm = new ClientForm();
         JFrame frame = new JFrame("Client");
         frame.setContentPane(clientForm.mainPanel);
+        JRootPane rootPane = clientForm.mainPanel.getRootPane();
 
         frame.setAlwaysOnTop(true);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        rootPane.registerKeyboardAction(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                openSaveSettingsForm(clientForm, frame);
+            }
+        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        rootPane.setDefaultButton(clientForm.btnConnect);
+
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
-                saveSettingsForm.setLocationRelativeTo(null);
-                saveSettingsForm.setAlwaysOnTop(true);
-                saveSettingsForm.pack();
-                saveSettingsForm.setVisible(true);
+                openSaveSettingsForm(clientForm, frame);
             }
         });
 

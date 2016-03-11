@@ -19,6 +19,7 @@ public class SaveSettingsForm extends JDialog {
                 clientForm.saveSettings();
                 frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 dispose();
+                frame.dispose();
             }
         });
 
@@ -26,6 +27,7 @@ public class SaveSettingsForm extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 dispose();
+                frame.dispose();
             }
         });
 
