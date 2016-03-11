@@ -23,6 +23,7 @@ public class NewUserForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
+        pack();
         this.setLocationRelativeTo(null);
         this.setAlwaysOnTop(true);
         this.setTitle("Create new user");

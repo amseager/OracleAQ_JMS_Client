@@ -99,7 +99,7 @@
           <text value="Sync receive"/>
         </properties>
       </component>
-      <tabbedpane id="92d9c" binding="tabbedPane1" default-binding="true">
+      <tabbedpane id="92d9c" binding="tbdPane">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="200" height="200"/>
@@ -272,7 +272,7 @@
             <border type="none"/>
             <children/>
           </grid>
-          <grid id="41d63" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="41d63" binding="pnlBrowser" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Browser"/>
@@ -280,13 +280,32 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="8a00" class="javax.swing.JTextArea" binding="textArea1" default-binding="true">
+              <scrollpane id="9af27" binding="scrBrowser">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="50"/>
+                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="0" height="128"/>
                   </grid>
                 </constraints>
                 <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="885a8" class="javax.swing.JTextArea" binding="txaBrowser">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <component id="120e8" class="javax.swing.JLabel" binding="lblTotalRows">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                    <minimum-size width="-1" height="14"/>
+                    <preferred-size width="52" height="14"/>
+                    <maximum-size width="-1" height="14"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="total rows"/>
+                </properties>
               </component>
             </children>
           </grid>

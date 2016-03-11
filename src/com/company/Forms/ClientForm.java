@@ -9,6 +9,7 @@ import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.List;
 
 public class ClientForm extends JPanel {
     private JButton btnSend;
@@ -34,22 +35,28 @@ public class ClientForm extends JPanel {
     private JTextField txtDriver;
     private JLabel lblDriver;
     private JLabel lblUser;
-    private JTabbedPane tabbedPane1;
+    private JTabbedPane tbdPane;
     private JButton btnConnect;
     private JButton btnDisconnect;
     private JPanel pnlConnection;
     private JButton btnBrowse;
-    private JTextArea textArea1;
     private JButton btnCreateUser;
+    private JTextArea txaBrowser;
+    private JScrollPane scrBrowser;
+    private JPanel pnlBrowser;
+    private JLabel lblTotalRows;
 
     private static QueueConnection connection;
     private static AQjmsSession session;
     private static boolean isConnected = false;
 
     private String jsonFilePath = "settings.json";
+    private String TOTAL_ROWS_STRING = "Total rows: ";
+    int count = 0;
 
     public ClientForm() {
         loadPreviousOrDefaultSettings();
+
 
         btnConnect.addActionListener(new ActionListener() {
             @Override
@@ -72,6 +79,14 @@ public class ClientForm extends JPanel {
                 System.out.println("Connected successfully");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
                 JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
+
+                // Initialize browser
+                List<String> messages = OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
+                lblTotalRows.setText(TOTAL_ROWS_STRING + messages.size());
+                txaBrowser.setText("");
+                for (String message: messages) {
+                    txaBrowser.append(message + "\n");
+                }
             }
         });
         btnDisconnect.addActionListener(new ActionListener() {
@@ -86,19 +101,22 @@ public class ClientForm extends JPanel {
                 }
                 System.out.println("Disconnected");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
+
+                lblTotalRows.setText(TOTAL_ROWS_STRING + "0");
+                txaBrowser.setText("");
             }
         });
 
         btnCreateUser.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SysPasswordForm uc = new SysPasswordForm(
+                SysPasswordForm sysPasswordForm = new SysPasswordForm(
                         txtHost.getText(),
                         txtSid.getText(),
                         txtPort.getText(),
                         txtDriver.getText());
-                uc.pack();
-                uc.setVisible(true);
+                sysPasswordForm.pack();
+                sysPasswordForm.setVisible(true);
             }
         });
 
@@ -108,13 +126,45 @@ public class ClientForm extends JPanel {
 
         btnDrop.addActionListener(e -> OJMSClient.dropQueueTable(session, txtUser.getText(), txtTable.getText()));
 
-        btnSend.addActionListener(e -> OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(),"<user>text</user>"));
+        btnSend.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String newMessage = "<user>" + (++count) + "</user>";
+                OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(), newMessage);
+                int count = Integer.parseInt(lblTotalRows.getText().substring(TOTAL_ROWS_STRING.length(), lblTotalRows.getText().length()));
+                lblTotalRows.setText(TOTAL_ROWS_STRING + ++count);
+                txaBrowser.append(newMessage + "\n");
+            }
+        });
 
-        btnBrowse.addActionListener(e -> OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText()));
+        btnBrowse.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
+                BrowserForm browserForm = new BrowserForm(session, txtUser.getText(), txtQueue.getText());
+                browserForm.pack();
+                browserForm.setLocationRelativeTo(null);
+                browserForm.setVisible(true);
+            }
+        });
 
         btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
 
-        btnSyncReceive.addActionListener(e -> OJMSClient.consumeMessage(session, txtUser.getText(), txtQueue.getText()));
+        btnSyncReceive.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                List<String> msgList = OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
+                int size = msgList.size();
+                if (size > 0) {
+                    lblTotalRows.setText(TOTAL_ROWS_STRING + (size - 1));
+                    txaBrowser.setText("");
+                    for (int i = 1; i < size; i++) {
+                        txaBrowser.append(msgList.get(i) + "\n");
+                    }
+                    OJMSClient.consumeMessage(session, txtUser.getText(), txtQueue.getText());
+                }
+            }
+        });
 
     }
 
@@ -168,18 +218,20 @@ public class ClientForm extends JPanel {
         JRootPane rootPane = clientForm.mainPanel.getRootPane();
 
         frame.setAlwaysOnTop(true);
-        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+//        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         rootPane.registerKeyboardAction(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                openSaveSettingsForm(clientForm, frame);
+                frame.dispose();        //temporary
+//                openSaveSettingsForm(clientForm, frame);
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         rootPane.setDefaultButton(clientForm.btnConnect);
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                openSaveSettingsForm(clientForm, frame);
+//                openSaveSettingsForm(clientForm, frame);
             }
         });
 
@@ -201,6 +253,7 @@ public class ClientForm extends JPanel {
         frame.setLocationRelativeTo(null);
         frame.pack();
         frame.setVisible(true);
+        clientForm.btnConnect.doClick();    //temporary
     }
 
     public static void main(String[] args) {

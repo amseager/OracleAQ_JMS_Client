@@ -14,6 +14,8 @@ public class SaveSettingsForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(btnYes);
+        pack();
+        setLocationRelativeTo(null);
         btnYes.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 clientForm.saveSettings();

@@ -30,6 +30,7 @@ public class SysPasswordForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(btnOK);
+        pack();
         this.setLocationRelativeTo(null);
         this.setAlwaysOnTop(true);
         this.setTitle("Connect as SYS");

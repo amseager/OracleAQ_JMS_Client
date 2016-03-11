@@ -6,7 +6,9 @@ import oracle.AQ.AQQueueTableProperty;
 import oracle.jms.*;
 
 import javax.jms.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Locale;
 
 public class OJMSClient {
@@ -100,21 +102,21 @@ public class OJMSClient {
         }
     }
 
-    public static void browseMessage(AQjmsSession session, String userName, String queueName) {
+    public static List<String> browseMessage(AQjmsSession session, String userName, String queueName) {
+        List<String> list = new ArrayList<>();
         try {
             Queue queue = session.getQueue(userName, queueName);
             QueueBrowser browser = session.createBrowser(queue);
             Enumeration enu = browser.getEnumeration();
             while (enu.hasMoreElements()) {
                 TextMessage message = (TextMessage) enu.nextElement();
-                System.out.println("Browsed msg " + message.getText());
+                list.add(message.getText());
             }
             browser.close();
-
         } catch (JMSException e) {
             e.printStackTrace();
         }
-
+        return list;
     }
 
     public static void consumeMessage(AQjmsSession session, String userName, String queueName) {
