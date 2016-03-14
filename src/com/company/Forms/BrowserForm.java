@@ -18,8 +18,6 @@ public class BrowserForm extends JDialog {
     public BrowserForm(AQjmsSession session, String userName, String queueName) {
         setContentPane(contentPane);
         setModal(true);
-        pack();
-        setLocationRelativeTo(null);
         setAlwaysOnTop(true);
         setTitle("Queue Browser");
 
@@ -39,7 +37,8 @@ public class BrowserForm extends JDialog {
         for (String message: messages) {
             txaBrowser.append(message + "\n");
         }
+
+        pack();
+        setLocationRelativeTo(null);
     }
-
-
 }

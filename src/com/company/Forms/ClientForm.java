@@ -9,6 +9,7 @@ import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.swing.*;
 import java.awt.event.*;
+import java.text.ParseException;
 import java.util.List;
 
 public class ClientForm extends JPanel {
@@ -45,6 +46,8 @@ public class ClientForm extends JPanel {
     private JScrollPane scrBrowser;
     private JPanel pnlBrowser;
     private JLabel lblTotalRows;
+    private JSpinner spnSend;
+    private JButton btnStopAsyncReceive;
 
     private static QueueConnection connection;
     private static AQjmsSession session;
@@ -52,11 +55,15 @@ public class ClientForm extends JPanel {
 
     private String jsonFilePath = "settings.json";
     private String TOTAL_ROWS_STRING = "Total rows: ";
-    int count = 0;
+
+    int tempMessageNumber = 0;
+
+    private AsyncConsumer asyncConsumer = new AsyncConsumer();
 
     public ClientForm() {
         loadPreviousOrDefaultSettings();
 
+        spnSend.setModel(new SpinnerNumberModel(10, 1, 1000, 1));
 
         btnConnect.addActionListener(new ActionListener() {
             @Override
@@ -89,6 +96,7 @@ public class ClientForm extends JPanel {
                 }
             }
         });
+
         btnDisconnect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -129,26 +137,36 @@ public class ClientForm extends JPanel {
         btnSend.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String newMessage = "<user>" + (++count) + "</user>";
-                OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(), newMessage);
-                int count = Integer.parseInt(lblTotalRows.getText().substring(TOTAL_ROWS_STRING.length(), lblTotalRows.getText().length()));
-                lblTotalRows.setText(TOTAL_ROWS_STRING + ++count);
-                txaBrowser.append(newMessage + "\n");
+                try {
+                    spnSend.commitEdit();
+                } catch (ParseException e1) {
+                    e1.printStackTrace();
+                }
+                for (int i = 0; i < (int) spnSend.getValue(); i++) {
+                    String newMessage = "<user>" + (++tempMessageNumber) + "</user>";
+                    OJMSClient.sendMessage(session, txtUser.getText(), txtQueue.getText(), newMessage);
+                    txaBrowser.append(newMessage + "\n");
+                }
+                int prevNumRows = Integer.parseInt(lblTotalRows.getText().substring(TOTAL_ROWS_STRING.length(), lblTotalRows.getText().length()));
+                lblTotalRows.setText(TOTAL_ROWS_STRING + (prevNumRows + (int) spnSend.getValue()));
             }
         });
 
-        btnBrowse.addActionListener(new ActionListener() {
+        btnBrowse.addActionListener(e -> new BrowserForm(session, txtUser.getText(), txtQueue.getText()).setVisible(true));
+
+        btnAsyncReceive.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //OJMSClient.browseMessage(session, txtUser.getText(), txtQueue.getText());
-                BrowserForm browserForm = new BrowserForm(session, txtUser.getText(), txtQueue.getText());
-                browserForm.pack();
-                browserForm.setLocationRelativeTo(null);
-                browserForm.setVisible(true);
+                asyncConsumer.run(session, txtUser.getText(), txtQueue.getText());
             }
         });
 
-        btnAsyncReceive.addActionListener(e -> new AsyncConsumer().run(session, txtUser.getText(), txtQueue.getText()));
+        btnStopAsyncReceive.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                asyncConsumer.close();
+            }
+        });
 
         btnSyncReceive.addActionListener(new ActionListener() {
             @Override
