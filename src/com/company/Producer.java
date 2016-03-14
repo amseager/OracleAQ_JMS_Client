@@ -28,7 +28,7 @@ public class Producer {
                 producer.send(tMsg);
                 System.out.println("Sent message = " + tMsg.getText());
             }
-            //producer.close();
+            //producer.shutdown();
             //session.commit();
         } catch (JMSException e) {
             e.printStackTrace();
