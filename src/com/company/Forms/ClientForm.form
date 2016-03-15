@@ -238,13 +238,20 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <scrollpane id="fcb95" binding="scrConsumerList">
+                  <scrollpane id="fcb95" binding="scrConsumer">
                     <constraints>
                       <splitpane position="left"/>
                     </constraints>
                     <properties/>
                     <border type="none"/>
-                    <children/>
+                    <children>
+                      <component id="50c80" class="javax.swing.JList" binding="lstConsumer">
+                        <constraints/>
+                        <properties>
+                          <selectionMode value="0"/>
+                        </properties>
+                      </component>
+                    </children>
                   </scrollpane>
                   <scrollpane id="8ed09" binding="scrConsumerOutput">
                     <constraints>
@@ -252,7 +259,14 @@
                     </constraints>
                     <properties/>
                     <border type="none"/>
-                    <children/>
+                    <children>
+                      <component id="49199" class="javax.swing.JTextArea" binding="txtConsumerOutput">
+                        <constraints/>
+                        <properties>
+                          <editable value="false"/>
+                        </properties>
+                      </component>
+                    </children>
                   </scrollpane>
                 </children>
               </splitpane>
@@ -315,7 +329,9 @@
       </component>
       <component id="58227" class="javax.swing.JSpinner" binding="spnSend">
         <constraints>
-          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="83" height="26"/>
+          </grid>
         </constraints>
         <properties/>
       </component>

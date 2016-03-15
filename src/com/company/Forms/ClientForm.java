@@ -8,6 +8,9 @@ import oracle.jms.AQjmsSession;
 import javax.jms.JMSException;
 import javax.jms.QueueConnection;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.text.DefaultCaret;
 import java.awt.event.*;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -51,9 +54,11 @@ public class ClientForm extends JPanel {
     private JButton btnStopAsyncReceive;
     private JPanel pnlThreads;
     private JSplitPane splThreads;
-    private JScrollPane scrConsumerList;
+    private JScrollPane scrConsumer;
     private JScrollPane scrConsumerOutput;
     private JSpinner spnThreads;
+    private JList<String> lstConsumer;
+    private JTextArea txtConsumerOutput;
 
     private static QueueConnection connection;
     private static AQjmsSession mainSession;
@@ -62,15 +67,51 @@ public class ClientForm extends JPanel {
     private String jsonFilePath = "settings.json";
     private String TOTAL_ROWS_STRING = "Total rows: ";
     private int tempMessageNumber = 0;
+    private DefaultListModel<String> listModel = new DefaultListModel<>();
 
     private List<AsyncConsumer> threads = new ArrayList<>();
+
+    private static ClientForm clientForm;
+
+    public static ClientForm getClientForm() {
+        return clientForm;
+    }
+
+    public boolean isRowSelected(String expectedThreadName) {
+        boolean isRowSelected = false;
+        int index = lstConsumer.getSelectedIndex();
+        String realThreadName = threads.get(index).getName();
+        if (expectedThreadName.equals(realThreadName)) {
+            isRowSelected = true;
+        }
+        return isRowSelected;
+    }
+
+    public void appendConsumerOutput(String message) {
+        txtConsumerOutput.append(message + "\n");
+    }
 
     public ClientForm() {
         loadPreviousOrDefaultSettings();
 
+        ((DefaultCaret) txtConsumerOutput.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         spnSend.setModel(new SpinnerNumberModel(20, 1, 1000, 1));
         spnThreads.setModel(new SpinnerNumberModel(2, 1, 100, 1));
         tbdPane.setSelectedIndex(1);
+        lstConsumer.setModel(listModel);
+
+        lstConsumer.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                int index = lstConsumer.getSelectedIndex();
+                List<String> messageList = threads.get(index).getMessageList();
+                txtConsumerOutput.setText("");
+//                for (String message: messageList) {
+//                    txtConsumerOutput.append(message + "\n");
+//                }
+            }
+        });
+
 
         btnConnect.addActionListener(new ActionListener() {
             @Override
@@ -174,6 +215,7 @@ public class ClientForm extends JPanel {
                 for (int i = 0; i < numberOfThreads; i++) {
                     AQjmsSession threadSession = OJMSClient.getSession(connection);
                     AsyncConsumer asyncConsumer = new AsyncConsumer(threadSession, txtUser.getText(), txtQueue.getText());
+                    listModel.addElement(asyncConsumer.getName());
                     threads.add(asyncConsumer);
                     asyncConsumer.start();
                 }
@@ -183,9 +225,22 @@ public class ClientForm extends JPanel {
         btnStopAsyncReceive.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //asyncConsumer.shutdown();
-                threads.get(0).shutdown();
-//                threads.get(1).shutdown();
+                if (listModel.getSize() > 0) {
+                    int index = lstConsumer.getSelectedIndex();
+                    System.out.println("shutdown " + threads.get(index).getName());
+                    threads.get(index).shutdown();
+                    threads.remove(index);
+
+                    listModel.remove(index);
+                    int size = listModel.getSize();
+                    if (size > 0) {
+                        if (index == size) {
+                            index--;
+                        }
+                        lstConsumer.setSelectedIndex(index);
+                        lstConsumer.ensureIndexIsVisible(index);
+                    }
+                }
             }
         });
 
@@ -251,7 +306,7 @@ public class ClientForm extends JPanel {
     }
 
     private static void createAndShowGUI() {
-        ClientForm clientForm = new ClientForm();
+        clientForm = new ClientForm();
         JFrame frame = new JFrame("Client");
         frame.setContentPane(clientForm.mainPanel);
         JRootPane rootPane = clientForm.mainPanel.getRootPane();
