@@ -28,12 +28,10 @@ public class AsyncConsumer extends Thread implements MessageListener {
         try {
             if (message instanceof TextMessage) {
                 String txtMessage = ((TextMessage)message).getText();
-                System.out.println(this.getName() + " Message received: " + txtMessage);
                 messageList.add(txtMessage);
-                if (ClientForm.getClientForm().isRowSelected(this.getName())) {
-                    ClientForm.getClientForm().appendConsumerOutput(txtMessage);
-                }
+                ClientForm.getClientForm().appendConsumerOutputIfRowIsSelected(this.getName(), txtMessage);
                 this.session.commit();
+                System.out.println(this.getName() + " Message received: " + txtMessage);
             } else {
                 System.out.println("Invalid message received.");
             }

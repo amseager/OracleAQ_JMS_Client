@@ -60,6 +60,8 @@ public class ClientForm extends JPanel {
     private JList<String> lstConsumer;
     private JTextArea txtConsumerOutput;
 
+    private static ClientForm clientForm;
+
     private static QueueConnection connection;
     private static AQjmsSession mainSession;
     private static boolean isConnected = false;
@@ -71,24 +73,18 @@ public class ClientForm extends JPanel {
 
     private List<AsyncConsumer> threads = new ArrayList<>();
 
-    private static ClientForm clientForm;
-
     public static ClientForm getClientForm() {
         return clientForm;
     }
 
-    public boolean isRowSelected(String expectedThreadName) {
-        boolean isRowSelected = false;
+    public void appendConsumerOutputIfRowIsSelected(String expectedThreadName, String message) {
         int index = lstConsumer.getSelectedIndex();
-        String realThreadName = threads.get(index).getName();
-        if (expectedThreadName.equals(realThreadName)) {
-            isRowSelected = true;
+        if (index > -1) {
+            String realThreadName = threads.get(index).getName();
+            if (expectedThreadName.equals(realThreadName)) {
+                txtConsumerOutput.append(message + "\n");
+            }
         }
-        return isRowSelected;
-    }
-
-    public void appendConsumerOutput(String message) {
-        txtConsumerOutput.append(message + "\n");
     }
 
     public ClientForm() {
@@ -96,19 +92,20 @@ public class ClientForm extends JPanel {
 
         ((DefaultCaret) txtConsumerOutput.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         spnSend.setModel(new SpinnerNumberModel(20, 1, 1000, 1));
-        spnThreads.setModel(new SpinnerNumberModel(2, 1, 100, 1));
+        spnThreads.setModel(new SpinnerNumberModel(1, 1, 100, 1));
         tbdPane.setSelectedIndex(1);
         lstConsumer.setModel(listModel);
-
         lstConsumer.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 int index = lstConsumer.getSelectedIndex();
-                List<String> messageList = threads.get(index).getMessageList();
                 txtConsumerOutput.setText("");
-//                for (String message: messageList) {
-//                    txtConsumerOutput.append(message + "\n");
-//                }
+                if (index > -1) {
+                    List<String> messageList = threads.get(index).getMessageList();
+                    for (String message : messageList) {
+                        txtConsumerOutput.append(message + "\n");
+                    }
+                }
             }
         });
 
@@ -230,7 +227,6 @@ public class ClientForm extends JPanel {
                     System.out.println("shutdown " + threads.get(index).getName());
                     threads.get(index).shutdown();
                     threads.remove(index);
-
                     listModel.remove(index);
                     int size = listModel.getSize();
                     if (size > 0) {

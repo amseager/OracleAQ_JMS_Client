@@ -235,7 +235,9 @@
                     <preferred-size width="200" height="200"/>
                   </grid>
                 </constraints>
-                <properties/>
+                <properties>
+                  <dividerLocation value="120"/>
+                </properties>
                 <border type="none"/>
                 <children>
                   <scrollpane id="fcb95" binding="scrConsumer">
@@ -364,7 +366,7 @@
           <grid row="3" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Sync receive"/>
+          <text value="Receive 1 message"/>
         </properties>
       </component>
       <component id="c59b" class="javax.swing.JButton" binding="btnStopAsyncReceive">
