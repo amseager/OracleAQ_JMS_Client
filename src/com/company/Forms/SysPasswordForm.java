@@ -30,10 +30,8 @@ public class SysPasswordForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(btnOK);
-        pack();
-        this.setLocationRelativeTo(null);
-        this.setAlwaysOnTop(true);
-        this.setTitle("Connect as SYS");
+        setAlwaysOnTop(true);
+        setTitle("Connect as SYS");
 
         btnOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -61,6 +59,10 @@ public class SysPasswordForm extends JDialog {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
     private Connection connectAsSys(String password) throws SQLException {
@@ -79,9 +81,7 @@ public class SysPasswordForm extends JDialog {
             Connection sysConnection = connectAsSys(String.valueOf(txtSysPassword.getPassword()));
             System.out.println("Connected as SYS");
             dispose();
-            NewUserForm newUserForm = new NewUserForm(sysConnection);
-            newUserForm.pack();
-            newUserForm.setVisible(true);
+            new NewUserForm(sysConnection);
         } catch (SQLException e) {
             lblIncorrectPassword.setText("Incorrect password");
         }

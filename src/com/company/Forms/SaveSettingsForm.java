@@ -14,8 +14,7 @@ public class SaveSettingsForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(btnYes);
-        pack();
-        setLocationRelativeTo(null);
+        setAlwaysOnTop(true);
         btnYes.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 clientForm.saveSettings();
@@ -53,5 +52,9 @@ public class SaveSettingsForm extends JDialog {
                 dispose();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 }

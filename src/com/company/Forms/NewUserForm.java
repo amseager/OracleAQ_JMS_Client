@@ -23,10 +23,8 @@ public class NewUserForm extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
-        pack();
-        this.setLocationRelativeTo(null);
-        this.setAlwaysOnTop(true);
-        this.setTitle("Create new user");
+        setAlwaysOnTop(true);
+        setTitle("Create new user");
 
         buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -54,6 +52,10 @@ public class NewUserForm extends JDialog {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
     private void createUser(Connection sysConnection, String userName, String password) {

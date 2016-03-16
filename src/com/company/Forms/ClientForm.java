@@ -59,6 +59,9 @@ public class ClientForm extends JPanel {
     private JSpinner spnThreads;
     private JList<String> lstConsumer;
     private JTextArea txtConsumerOutput;
+    private JSpinner spnThreadLatency;
+    private JPanel pnlThreadsMenu;
+    private JLabel lblReceivedMessage;
 
     private static ClientForm clientForm;
 
@@ -68,6 +71,8 @@ public class ClientForm extends JPanel {
 
     private String jsonFilePath = "settings.json";
     private String TOTAL_ROWS_STRING = "Total rows: ";
+    private String RECEIVED_MESSAGE_STRING = "Last received message: ";
+
     private int tempMessageNumber = 0;
     private DefaultListModel<String> listModel = new DefaultListModel<>();
 
@@ -87,12 +92,17 @@ public class ClientForm extends JPanel {
         }
     }
 
+    public void refreshBrowser() {
+
+    }
+
     public ClientForm() {
         loadPreviousOrDefaultSettings();
 
         ((DefaultCaret) txtConsumerOutput.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-        spnSend.setModel(new SpinnerNumberModel(20, 1, 1000, 1));
-        spnThreads.setModel(new SpinnerNumberModel(1, 1, 100, 1));
+        spnSend.setModel(new SpinnerNumberModel(20, 1, null, 1));
+        spnThreads.setModel(new SpinnerNumberModel(1, 1, null, 1));
+        spnThreadLatency.setModel(new SpinnerNumberModel(1000, 0, null, 100));
         tbdPane.setSelectedIndex(1);
         lstConsumer.setModel(listModel);
         lstConsumer.addListSelectionListener(new ListSelectionListener() {
@@ -160,18 +170,7 @@ public class ClientForm extends JPanel {
             }
         });
 
-        btnCreateUser.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                SysPasswordForm sysPasswordForm = new SysPasswordForm(
-                        txtHost.getText(),
-                        txtSid.getText(),
-                        txtPort.getText(),
-                        txtDriver.getText());
-                sysPasswordForm.pack();
-                sysPasswordForm.setVisible(true);
-            }
-        });
+        btnCreateUser.addActionListener(e -> new SysPasswordForm(txtHost.getText(), txtSid.getText(), txtPort.getText(), txtDriver.getText()));
 
         btnCreateTable.addActionListener(e -> OJMSClient.createTable(mainSession, txtUser.getText(), txtTable.getText()));
 
@@ -197,7 +196,7 @@ public class ClientForm extends JPanel {
             }
         });
 
-        btnBrowse.addActionListener(e -> new BrowserForm(mainSession, txtUser.getText(), txtQueue.getText()).setVisible(true));
+        btnBrowse.addActionListener(e -> new BrowserForm(mainSession, txtUser.getText(), txtQueue.getText()));
 
         btnAsyncReceive.addActionListener(new ActionListener() {
             @Override
@@ -246,12 +245,14 @@ public class ClientForm extends JPanel {
                 List<String> msgList = OJMSClient.browseMessage(mainSession, txtUser.getText(), txtQueue.getText());
                 int size = msgList.size();
                 if (size > 0) {
+                    OJMSClient.consumeMessage(mainSession, txtUser.getText(), txtQueue.getText());
                     lblTotalRows.setText(TOTAL_ROWS_STRING + (size - 1));
+                    lblReceivedMessage.setText(RECEIVED_MESSAGE_STRING + msgList.get(0));
                     txaBrowser.setText("");
                     for (int i = 1; i < size; i++) {
                         txaBrowser.append(msgList.get(i) + "\n");
                     }
-                    OJMSClient.consumeMessage(mainSession, txtUser.getText(), txtQueue.getText());
+                    txaBrowser.setCaretPosition(0);
                 }
             }
         });
@@ -294,11 +295,7 @@ public class ClientForm extends JPanel {
     }
 
     private static void openSaveSettingsForm(ClientForm clientForm, JFrame frame) {
-        SaveSettingsForm saveSettingsForm = new SaveSettingsForm(clientForm, frame);
-        saveSettingsForm.setLocationRelativeTo(null);
-        saveSettingsForm.setAlwaysOnTop(true);
-        saveSettingsForm.pack();
-        saveSettingsForm.setVisible(true);
+        new SaveSettingsForm(clientForm, frame);
     }
 
     private static void createAndShowGUI() {

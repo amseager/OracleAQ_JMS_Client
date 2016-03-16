@@ -40,5 +40,6 @@ public class BrowserForm extends JDialog {
 
         pack();
         setLocationRelativeTo(null);
+        setVisible(true);
     }
 }
