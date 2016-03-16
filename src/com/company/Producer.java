@@ -6,33 +6,41 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.TextMessage;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class Producer {
-    private MessageProducer producer;
+public class Producer extends Thread {
+    private AQjmsSession session;
+    private String userName;
+    private String queueName;
+    private AtomicInteger msgNumber;
+    private int msgCount;
 
-    public Producer(AQjmsSession session, String user, String queueName) {
-        try {
-            Queue queue = session.getQueue(user, queueName);
-            producer = session.createProducer(queue);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+    public Producer(AQjmsSession session, String userName, String queueName, AtomicInteger msgNumber, int msgCount) {
+        this.session = session;
+        this.userName = userName;
+        this.queueName = queueName;
+        this.msgNumber = msgNumber;
+        this.msgCount = msgCount;
     }
 
-    public void run(AQjmsSession session, String message) {
+    @Override
+    public void run() {
         try {
-            TextMessage tMsg = session.createTextMessage(message);
-            //set properties to msg since axis2 needs this parameters to find the operation
-            tMsg.setStringProperty("SOAPAction", "getQuote");
-            for (int i = 0; i < 100; i++) {
-                producer.send(tMsg);
-                System.out.println("Sent message = " + tMsg.getText());
+            Queue queue = session.getQueue(userName, queueName);
+            MessageProducer producer = session.createProducer(queue);
+            for (int i = 0; i < msgCount; i++) {
+                String message = "<user>" + (msgNumber.incrementAndGet()) + "</user>";
+                TextMessage txtMessage = session.createTextMessage(message);
+//                txtMessage.setStringProperty("SOAPAction", "getQuote");
+                producer.send(txtMessage);
+                System.out.println("Sent message = " + txtMessage.getText());
             }
-            //producer.shutdown();
-            //session.commit();
+            session.commit();
+            session.close();
         } catch (JMSException e) {
             e.printStackTrace();
+        } finally {
+            this.interrupt();
         }
     }
-
 }

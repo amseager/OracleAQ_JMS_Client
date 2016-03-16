@@ -3,6 +3,7 @@ package com.company.Forms;
 import com.company.AsyncConsumer;
 import com.company.JsonSettings;
 import com.company.OJMSClient;
+import com.company.Producer;
 import oracle.jms.AQjmsSession;
 
 import javax.jms.JMSException;
@@ -15,6 +16,7 @@ import java.awt.event.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientForm extends JPanel {
     private JButton btnSend;
@@ -62,6 +64,8 @@ public class ClientForm extends JPanel {
     private JSpinner spnThreadLatency;
     private JPanel pnlThreadsMenu;
     private JLabel lblReceivedMessage;
+    private JList<String> lstBrowser;
+    private JScrollPane scrBrowser2;
 
     private static ClientForm clientForm;
 
@@ -70,19 +74,25 @@ public class ClientForm extends JPanel {
     private static boolean isConnected = false;
 
     private String jsonFilePath = "settings.json";
-    private String TOTAL_ROWS_STRING = "Total rows: ";
-    private String RECEIVED_MESSAGE_STRING = "Last received message: ";
+    private final String TOTAL_ROWS_STRING = "Total rows: ";
+    private final String RECEIVED_MESSAGE_STRING = "Last received message: ";
 
-    private int tempMessageNumber = 0;
-    private DefaultListModel<String> listModel = new DefaultListModel<>();
+    private AtomicInteger msgNumber = new AtomicInteger();
+    private DefaultListModel<String> listConsumerModel = new DefaultListModel<>();
+    private DefaultListModel<String> listBrowserModel = new DefaultListModel<>();
+
 
     private List<AsyncConsumer> threads = new ArrayList<>();
+
+    public JSpinner getSpnThreadLatency() {
+        return spnThreadLatency;
+    }
 
     public static ClientForm getClientForm() {
         return clientForm;
     }
 
-    public void appendConsumerOutputIfRowIsSelected(String expectedThreadName, String message) {
+    public synchronized void appendConsumerOutputIfRowIsSelected(String expectedThreadName, String message) {
         int index = lstConsumer.getSelectedIndex();
         if (index > -1) {
             String realThreadName = threads.get(index).getName();
@@ -92,8 +102,8 @@ public class ClientForm extends JPanel {
         }
     }
 
-    public void refreshBrowser() {
-
+    public synchronized void refreshBrowser(String message) {
+        listBrowserModel.removeElement(message);
     }
 
     public ClientForm() {
@@ -104,7 +114,8 @@ public class ClientForm extends JPanel {
         spnThreads.setModel(new SpinnerNumberModel(1, 1, null, 1));
         spnThreadLatency.setModel(new SpinnerNumberModel(1000, 0, null, 100));
         tbdPane.setSelectedIndex(1);
-        lstConsumer.setModel(listModel);
+        lstBrowser.setModel(listBrowserModel);
+        lstConsumer.setModel(listConsumerModel);
         lstConsumer.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -143,11 +154,12 @@ public class ClientForm extends JPanel {
                 JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
 
                 // Initialize browser
-                List<String> messages = OJMSClient.browseMessage(mainSession, txtUser.getText(), txtQueue.getText());
-                lblTotalRows.setText(TOTAL_ROWS_STRING + messages.size());
+                List<String> messageList = OJMSClient.browseMessage(mainSession, txtUser.getText(), txtQueue.getText());
+                lblTotalRows.setText(TOTAL_ROWS_STRING + messageList.size());
                 txaBrowser.setText("");
-                for (String message: messages) {
+                for (String message: messageList) {
                     txaBrowser.append(message + "\n");
+                    listBrowserModel.addElement(message);
                 }
             }
         });
@@ -167,6 +179,7 @@ public class ClientForm extends JPanel {
 
                 lblTotalRows.setText(TOTAL_ROWS_STRING + "0");
                 txaBrowser.setText("");
+                listBrowserModel.clear();
             }
         });
 
@@ -186,13 +199,15 @@ public class ClientForm extends JPanel {
                 } catch (ParseException e1) {
                     e1.printStackTrace();
                 }
-                for (int i = 0; i < (int) spnSend.getValue(); i++) {
-                    String newMessage = "<user>" + (++tempMessageNumber) + "</user>";
-                    OJMSClient.sendMessage(mainSession, txtUser.getText(), txtQueue.getText(), newMessage);
-                    txaBrowser.append(newMessage + "\n");
-                }
-                int prevNumRows = Integer.parseInt(lblTotalRows.getText().substring(TOTAL_ROWS_STRING.length(), lblTotalRows.getText().length()));
-                lblTotalRows.setText(TOTAL_ROWS_STRING + (prevNumRows + (int) spnSend.getValue()));
+//                String newMessage = "<user>" + (++msgNumber) + "</user>";
+                AQjmsSession threadSession = OJMSClient.getSession(connection);
+                Producer producer = new Producer(threadSession, txtUser.getText(), txtQueue.getText(), msgNumber, (int) spnSend.getValue());
+                producer.start();
+//                    txaBrowser.append(newMessage + "\n");
+//                    listBrowserModel.addElement(newMessage);
+//                    lstBrowser.setSelectedIndex(0);
+              //  }
+                lblTotalRows.setText(TOTAL_ROWS_STRING + listBrowserModel.getSize());
             }
         });
 
@@ -211,7 +226,7 @@ public class ClientForm extends JPanel {
                 for (int i = 0; i < numberOfThreads; i++) {
                     AQjmsSession threadSession = OJMSClient.getSession(connection);
                     AsyncConsumer asyncConsumer = new AsyncConsumer(threadSession, txtUser.getText(), txtQueue.getText());
-                    listModel.addElement(asyncConsumer.getName());
+                    listConsumerModel.addElement(asyncConsumer.getName());
                     threads.add(asyncConsumer);
                     asyncConsumer.start();
                 }
@@ -221,13 +236,13 @@ public class ClientForm extends JPanel {
         btnStopAsyncReceive.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (listModel.getSize() > 0) {
+                if (listConsumerModel.getSize() > 0) {
                     int index = lstConsumer.getSelectedIndex();
                     System.out.println("shutdown " + threads.get(index).getName());
                     threads.get(index).shutdown();
                     threads.remove(index);
-                    listModel.remove(index);
-                    int size = listModel.getSize();
+                    listConsumerModel.remove(index);
+                    int size = listConsumerModel.getSize();
                     if (size > 0) {
                         if (index == size) {
                             index--;
@@ -253,6 +268,10 @@ public class ClientForm extends JPanel {
                         txaBrowser.append(msgList.get(i) + "\n");
                     }
                     txaBrowser.setCaretPosition(0);
+
+                    listBrowserModel.remove(0);
+                    lstBrowser.setSelectedIndex(0);
+                    lstBrowser.ensureIndexIsVisible(0);
                 }
             }
         });
