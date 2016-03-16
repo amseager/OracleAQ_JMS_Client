@@ -9,18 +9,15 @@ import java.util.List;
 
 public class AsyncConsumer extends Thread implements MessageListener {
     private AQjmsSession session;
+    private String userName;
+    private String queueName;
     private List<String> messageList;
 
     public AsyncConsumer(AQjmsSession session, String userName, String queueName) {
         this.session = session;
-        messageList = new ArrayList<>();
-        try {
-            Queue queue = this.session.getQueue(userName, queueName);
-            MessageConsumer consumer = session.createConsumer(queue);
-            consumer.setMessageListener(this);
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+        this.userName = userName;
+        this.queueName = queueName;
+        this.messageList = new ArrayList<>();
     }
 
     @Override
@@ -30,7 +27,7 @@ public class AsyncConsumer extends Thread implements MessageListener {
                 String txtMessage = ((TextMessage)message).getText();
                 messageList.add(txtMessage);
                 ClientForm.getClientForm().appendConsumerOutputIfRowIsSelected(this.getName(), txtMessage);
-                this.session.commit();
+                session.commit();
                 System.out.println(this.getName() + " Message received: " + txtMessage);
             } else {
                 System.out.println("Invalid message received.");
@@ -39,7 +36,7 @@ public class AsyncConsumer extends Thread implements MessageListener {
             e.printStackTrace();
         }
         try {
-            Thread.sleep(1000); //temporary
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -51,17 +48,22 @@ public class AsyncConsumer extends Thread implements MessageListener {
 
     @Override
     public void run() {
+        try {
+            Queue queue = session.getQueue(userName, queueName);
+            MessageConsumer consumer = session.createConsumer(queue);
+            consumer.setMessageListener(this);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
 
     public void shutdown() {
         try {
-            this.session.close();
+            session.close();
             this.interrupt();
 //            this.consumer.setMessageListener(null);
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
-
-
 }
