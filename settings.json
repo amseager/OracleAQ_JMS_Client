@@ -9,5 +9,8 @@
   "defaultUserName": "jmsuser",
   "defaultPassword": "jmsuser",
   "queueTable": "sample_aqtbl",
-  "queueName": "sample_aq"
+  "queueName": "sample_aq",
+  "sendCount": 5,
+  "threadsCount": 1,
+  "threadLatency": 100
 }

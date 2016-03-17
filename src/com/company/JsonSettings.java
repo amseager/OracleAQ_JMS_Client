@@ -17,6 +17,9 @@ public class JsonSettings {
     public String defaultPassword;
     public String queueTable;
     public String queueName;
+    public Integer sendCount;
+    public Integer threadsCount;
+    public Integer threadLatency;
 
     public JsonSettings() {
         // default settings
@@ -31,6 +34,9 @@ public class JsonSettings {
         this.defaultPassword = "jmsuser";
         this.queueTable = "sample_aqtbl";
         this.queueName = "sample_aq";
+        this.sendCount = 200;
+        this.threadsCount = 1;
+        this.threadLatency = 100;
     }
 
     static JsonSettings setDefaultValues(JsonSettings settings) {
@@ -46,6 +52,9 @@ public class JsonSettings {
         if (settings.defaultPassword == null)       settings.defaultPassword = defaultSettings.defaultPassword;
         if (settings.queueTable == null)            settings.queueTable = defaultSettings.queueTable;
         if (settings.queueName == null)             settings.queueName = defaultSettings.queueName;
+        if (settings.sendCount == null)             settings.sendCount = defaultSettings.sendCount;
+        if (settings.threadsCount == null)           settings.threadsCount = defaultSettings.threadsCount;
+        if (settings.threadLatency == null)         settings.threadLatency = defaultSettings.threadLatency;
         return settings;
     }
 

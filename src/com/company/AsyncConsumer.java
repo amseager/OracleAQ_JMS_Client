@@ -26,8 +26,8 @@ public class AsyncConsumer extends Thread implements MessageListener {
             if (message instanceof TextMessage) {
                 String txtMessage = ((TextMessage)message).getText();
                 messageList.add(txtMessage);
-                ClientForm.getClientForm().appendConsumerOutputIfRowIsSelected(this.getName(), txtMessage);
-//                ClientForm.getClientForm().refreshBrowser(txtMessage);
+                ClientForm.getForm().appendConsumerOutputIfRowIsSelected(this.getName(), txtMessage);
+//                ClientForm.getForm().refreshBrowser(txtMessage);
                 session.commit();
                 System.out.println(this.getName() + " Message received: " + txtMessage);
             } else {
@@ -37,7 +37,7 @@ public class AsyncConsumer extends Thread implements MessageListener {
             e.printStackTrace();
         }
         try {
-            Thread.sleep((int) ClientForm.getClientForm().getSpnThreadLatency().getValue());
+            Thread.sleep((int) ClientForm.getForm().getSpnThreadLatency().getValue());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
