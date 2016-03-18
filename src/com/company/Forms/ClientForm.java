@@ -3,8 +3,7 @@ package com.company.Forms;
 import com.company.*;
 import oracle.jms.AQjmsSession;
 
-import javax.jms.JMSException;
-import javax.jms.QueueConnection;
+import javax.jms.*;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -13,6 +12,8 @@ import java.awt.event.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientForm extends JPanel {
@@ -46,7 +47,7 @@ public class ClientForm extends JPanel {
     private JButton btnBrowse;
     private JButton btnCreateUser;
     private JPanel pnlBrowser;
-    private JLabel lblTotalRows;
+    private JLabel lblTotalRowsTitle;
     private JSpinner spnSend;
     private JButton btnStopAsyncReceive;
     private JPanel pnlThreads;
@@ -58,9 +59,11 @@ public class ClientForm extends JPanel {
     private JTextArea txtConsumerOutput;
     private JSpinner spnThreadLatency;
     private JPanel pnlThreadsMenu;
-    private JLabel lblReceivedMessage;
+    private JLabel lblReceivedMessageTitle;
     private JList<String> lstBrowser;
     private JScrollPane scrBrowser;
+    private JLabel lblTotalRowsValue;
+    private JLabel lblReceivedMessageValue;
 
     private static ClientForm form;
 
@@ -69,21 +72,24 @@ public class ClientForm extends JPanel {
     private static boolean isConnected = false;
 
     private String jsonFilePath = "settings.json";
-    private final String TOTAL_ROWS_STRING = "Total rows: ";
-    private final String RECEIVED_MESSAGE_STRING = "Last received message: ";
 
     private AtomicInteger msgNumber = new AtomicInteger();
     private DefaultListModel<String> listModelConsumer = new DefaultListModel<>();
-    private DefaultListModel<String> listModelBrowser = new DefaultListModel<>();
+
+    public DefaultListModel<String> getListModelBrowser() {
+        return listModelBrowser;
+    }
+
+    public JLabel getLblTotalRowsValue() {
+        return lblTotalRowsValue;
+    }
+
+    private volatile DefaultListModel<String> listModelBrowser = new DefaultListModel<>();
 
     private List<AsyncConsumer> threads = new ArrayList<>();
 
     public JSpinner getSpnThreadLatency() {
         return spnThreadLatency;
-    }
-
-    public DefaultListModel<String> getListModelBrowser() {
-        return listModelBrowser;
     }
 
     public static ClientForm getForm() {
@@ -101,10 +107,13 @@ public class ClientForm extends JPanel {
     }
 
     public synchronized void refreshBrowser(String message) {
-        listModelBrowser.removeElement(message);
+//        if (listModelBrowser.getElementAt(0).equals(message)) {
+//            listModelBrowser.removeElementAt(0);
+//            listModelBrowser.removeElement(message);
+//        }
     }
 
-    public static void commitSpinners(JSpinner... spinners) {
+    private static void commitSpinners(JSpinner... spinners) {
         for (JSpinner spinner: spinners) {
             try {
                 spinner.commitEdit();
@@ -114,7 +123,7 @@ public class ClientForm extends JPanel {
         }
     }
 
-    public ClientForm() {
+    private ClientForm() {
         spnSend.setModel(new SpinnerNumberModel(1, 1, null, 1));
         spnThreads.setModel(new SpinnerNumberModel(1, 1, null, 1));
         spnThreadLatency.setModel(new SpinnerNumberModel(1, 0, null, 100));
@@ -164,7 +173,7 @@ public class ClientForm extends JPanel {
 
                 // Initialize browser
                 List<String> messageList = OJMSClient.browseMessage(mainSession, txtUser.getText(), txtQueue.getText());
-                lblTotalRows.setText(TOTAL_ROWS_STRING + messageList.size());
+                lblTotalRowsValue.setText(String.valueOf(messageList.size()));
                 for (String message: messageList) {
                     listModelBrowser.addElement(message);
                 }
@@ -184,7 +193,7 @@ public class ClientForm extends JPanel {
                 System.out.println("Disconnected");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
 
-                lblTotalRows.setText(TOTAL_ROWS_STRING + "0");
+                lblTotalRowsValue.setText("0");
                 listModelBrowser.clear();
             }
         });
@@ -201,11 +210,18 @@ public class ClientForm extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 commitSpinners(spnSend);
-                AQjmsSession threadSession = OJMSClient.getSession(connection);
                 int msgCount = (int) spnSend.getValue();
-                Producer producer = new Producer(threadSession, txtUser.getText(), txtQueue.getText(), msgNumber, msgCount);
-                producer.start();
-                lblTotalRows.setText(TOTAL_ROWS_STRING + (listModelBrowser.getSize() + msgCount));
+                AQjmsSession sendSession = OJMSClient.getSession(connection);
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                MessageProducer producer = null;
+                try {
+                    Queue queue = sendSession.getQueue(txtUser.getText(), txtQueue.getText());
+                    producer = sendSession.createProducer(queue);
+                } catch (JMSException e1) {
+                    e1.printStackTrace();
+                }
+                Sender sender = new Sender(sendSession, producer, msgNumber, msgCount);
+                executor.execute(sender);
             }
         });
 
@@ -214,11 +230,7 @@ public class ClientForm extends JPanel {
         btnAsyncReceive.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    spnThreads.commitEdit();
-                } catch (ParseException e1) {
-                    e1.printStackTrace();
-                }
+                commitSpinners(spnThreads, spnThreadLatency);
                 int numberOfThreads = (int) spnThreads.getValue();
 
                 for (int i = 0; i < numberOfThreads; i++) {
@@ -259,8 +271,8 @@ public class ClientForm extends JPanel {
                 int size = msgList.size();
                 if (size > 0) {
                     OJMSClient.consumeMessage(mainSession, txtUser.getText(), txtQueue.getText());
-                    lblTotalRows.setText(TOTAL_ROWS_STRING + (size - 1));
-                    lblReceivedMessage.setText(RECEIVED_MESSAGE_STRING + msgList.get(0));
+                    lblTotalRowsValue.setText(String.valueOf(size - 1));
+                    lblReceivedMessageValue.setText(msgList.get(0));
 
                     listModelBrowser.remove(0);
                     lstBrowser.setSelectedIndex(0);
@@ -271,7 +283,7 @@ public class ClientForm extends JPanel {
 
     }
 
-    public static void switchState(JComponent... fields) {
+    private static void switchState(JComponent... fields) {
         for (JComponent field: fields) {
             field.setEnabled(!field.isEnabled());
         }
@@ -292,7 +304,7 @@ public class ClientForm extends JPanel {
         spnThreadLatency.setValue(settings.threadLatency);
     }
 
-    public void saveSettings() {
+    void saveSettings() {
         JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
     }
 
