@@ -12,6 +12,7 @@ public class AsyncConsumer extends Thread implements MessageListener {
     private String userName;
     private String queueName;
     private List<String> messageList;
+    private MessageConsumer messageConsumer;
 
     public AsyncConsumer(AQjmsSession session, String userName, String queueName) {
         this.session = session;
@@ -47,12 +48,31 @@ public class AsyncConsumer extends Thread implements MessageListener {
         return messageList;
     }
 
+    public MessageConsumer getMessageConsumer() {
+        return messageConsumer;
+    }
+
     @Override
     public void run() {
         try {
             Queue queue = session.getQueue(userName, queueName);
-            MessageConsumer consumer = session.createConsumer(queue);
-            consumer.setMessageListener(this);
+            messageConsumer = session.createConsumer(queue);
+            messageConsumer.setMessageListener(this);
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void pause() {
+        try {
+            if (messageConsumer.getMessageListener() == null) {
+                ClientForm.getForm().getBtnPauseAsyncThread().setText("Pause AR thread");
+                messageConsumer.setMessageListener(this);
+            } else {
+                ClientForm.getForm().getBtnPauseAsyncThread().setText("Resume AR thread");
+                messageConsumer.setMessageListener(null);
+            }
         } catch (JMSException e) {
             e.printStackTrace();
         }
@@ -62,7 +82,6 @@ public class AsyncConsumer extends Thread implements MessageListener {
         try {
             session.close();
             this.interrupt();
-//            this.consumer.setMessageListener(null);
         } catch (JMSException e) {
             e.printStackTrace();
         }

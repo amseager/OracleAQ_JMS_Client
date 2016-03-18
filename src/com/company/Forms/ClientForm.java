@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientForm extends JPanel {
     private JButton btnSend;
-    private JButton btnAsyncReceive;
+    private JButton btnCreateAsyncReceiveThread;
     private JPanel mainPanel;
     private JButton btnSyncReceive;
     private JButton btnDrop;
@@ -49,7 +49,7 @@ public class ClientForm extends JPanel {
     private JPanel pnlBrowser;
     private JLabel lblTotalRowsTitle;
     private JSpinner spnSend;
-    private JButton btnStopAsyncReceive;
+    private JButton btnTerminateAsyncReceiveThread;
     private JPanel pnlThreads;
     private JSplitPane splThreads;
     private JScrollPane scrConsumer;
@@ -64,6 +64,7 @@ public class ClientForm extends JPanel {
     private JScrollPane scrBrowser;
     private JLabel lblTotalRowsValue;
     private JLabel lblReceivedMessageValue;
+    private JButton btnPauseAsyncThread;
 
     private static ClientForm form;
 
@@ -78,6 +79,14 @@ public class ClientForm extends JPanel {
 
     public DefaultListModel<String> getListModelBrowser() {
         return listModelBrowser;
+    }
+
+    public JButton getBtnSend() {
+        return btnSend;
+    }
+
+    public JButton getBtnPauseAsyncThread() {
+        return btnPauseAsyncThread;
     }
 
     public JLabel getLblTotalRowsValue() {
@@ -108,7 +117,8 @@ public class ClientForm extends JPanel {
 
     public synchronized void refreshBrowser(String message) {
 //        if (listModelBrowser.getElementAt(0).equals(message)) {
-//            listModelBrowser.removeElementAt(0);
+        listModelBrowser.removeElementAt(0);
+        lblTotalRowsValue.setText(String.valueOf(Integer.parseInt(lblReceivedMessageValue.getText()) - 1));
 //            listModelBrowser.removeElement(message);
 //        }
     }
@@ -140,9 +150,19 @@ public class ClientForm extends JPanel {
                 int index = lstConsumer.getSelectedIndex();
                 txtConsumerOutput.setText("");
                 if (index > -1) {
-                    List<String> messageList = threads.get(index).getMessageList();
+                    AsyncConsumer thread = threads.get(index);
+                    List<String> messageList = thread.getMessageList();
                     for (String message : messageList) {
                         txtConsumerOutput.append(message + "\n");
+                    }
+                    try {
+                        if (thread.getMessageConsumer().getMessageListener() == null) {
+                            ClientForm.getForm().getBtnPauseAsyncThread().setText("Resume AR thread");
+                        } else {
+                            ClientForm.getForm().getBtnPauseAsyncThread().setText("Pause AR thread");
+                        }
+                    } catch (JMSException e1) {
+                        e1.printStackTrace();
                     }
                 }
             }
@@ -209,6 +229,7 @@ public class ClientForm extends JPanel {
         btnSend.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                btnSend.setEnabled(false);
                 commitSpinners(spnSend);
                 int msgCount = (int) spnSend.getValue();
                 AQjmsSession sendSession = OJMSClient.getSession(connection);
@@ -227,7 +248,7 @@ public class ClientForm extends JPanel {
 
         btnBrowse.addActionListener(e -> new BrowserForm(mainSession, txtUser.getText(), txtQueue.getText()));
 
-        btnAsyncReceive.addActionListener(new ActionListener() {
+        btnCreateAsyncReceiveThread.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 commitSpinners(spnThreads, spnThreadLatency);
@@ -243,7 +264,7 @@ public class ClientForm extends JPanel {
             }
         });
 
-        btnStopAsyncReceive.addActionListener(new ActionListener() {
+        btnTerminateAsyncReceiveThread.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (listModelConsumer.getSize() > 0) {
@@ -260,6 +281,16 @@ public class ClientForm extends JPanel {
                         lstConsumer.setSelectedIndex(index);
                         lstConsumer.ensureIndexIsVisible(index);
                     }
+                }
+            }
+        });
+
+        btnPauseAsyncThread.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = lstConsumer.getSelectedIndex();
+                if (index > -1) {
+                    threads.get(index).pause();
                 }
             }
         });

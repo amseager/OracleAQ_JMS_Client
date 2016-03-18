@@ -43,6 +43,8 @@ public class Sender implements Runnable {
                     .setText(String.valueOf(ClientForm.getForm().getListModelBrowser().getSize()));
         } catch (JMSException e) {
             e.printStackTrace();
+        } finally {
+            ClientForm.getForm().getBtnSend().setEnabled(true);
         }
     }
 }
