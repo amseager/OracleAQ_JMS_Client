@@ -2,6 +2,8 @@ package com.company.Forms;
 
 import com.company.*;
 import oracle.jms.AQjmsSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
 import javax.swing.*;
@@ -17,6 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientForm extends JPanel {
+    private static final Logger log = LoggerFactory.getLogger(ClientForm.class);
+
     private JButton btnSend;
     private JButton btnCreateAsyncReceiveThread;
     private JPanel mainPanel;
@@ -95,7 +99,7 @@ public class ClientForm extends JPanel {
 
     private volatile DefaultListModel<String> listModelBrowser = new DefaultListModel<>();
 
-    private List<AsyncConsumer> threads = new ArrayList<>();
+    private volatile List<AsyncConsumer> threads = new ArrayList<>();
 
     public JSpinner getSpnThreadLatency() {
         return spnThreadLatency;
@@ -146,7 +150,7 @@ public class ClientForm extends JPanel {
         lstConsumer.setModel(listModelConsumer);
         lstConsumer.addListSelectionListener(new ListSelectionListener() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
+            public synchronized void valueChanged(ListSelectionEvent e) {
                 int index = lstConsumer.getSelectedIndex();
                 txtConsumerOutput.setText("");
                 if (index > -1) {
@@ -187,7 +191,7 @@ public class ClientForm extends JPanel {
                 } catch (JMSException e1) {
                     e1.printStackTrace();
                 }
-                System.out.println("Connected successfully");
+                log.info("Connected successfully");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
                 JsonSettings.saveSettings(getCurrentSettings(), jsonFilePath);
 
@@ -210,7 +214,7 @@ public class ClientForm extends JPanel {
                 } catch (JMSException e1) {
                     e1.printStackTrace();
                 }
-                System.out.println("Disconnected");
+                log.info("Disconnected");
                 switchState(btnConnect, btnDisconnect, txtUser, txtPassword, txtHost, txtPort, txtSid, txtDriver);
 
                 lblTotalRowsValue.setText("0");
@@ -269,7 +273,7 @@ public class ClientForm extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (listModelConsumer.getSize() > 0) {
                     int index = lstConsumer.getSelectedIndex();
-                    System.out.println("shutdown " + threads.get(index).getName());
+                    log.info("shutdown " + threads.get(index).getName());
                     threads.get(index).shutdown();
                     threads.remove(index);
                     listModelConsumer.remove(index);

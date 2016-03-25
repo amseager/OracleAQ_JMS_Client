@@ -2,10 +2,14 @@ package com.company;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
 public class JsonSettings {
+    private static final Logger log = LoggerFactory.getLogger(JsonSettings.class);
+
     public String userName;
     public String password;
     public String host;
@@ -39,7 +43,7 @@ public class JsonSettings {
         this.threadLatency = 100;
     }
 
-    static JsonSettings setDefaultValues(JsonSettings settings) {
+    private static JsonSettings setDefaultValues(JsonSettings settings) {
         JsonSettings defaultSettings = new JsonSettings();
         if (settings.userName == null)              settings.userName = defaultSettings.userName;
         if (settings.password == null)              settings.password = defaultSettings.password;
@@ -69,7 +73,7 @@ public class JsonSettings {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("File is not exist: " + settingsFile + ". It will be created.");
+            log.info("File is not exist: " + settingsFile + ". It will be created.");
             saveSettings(settings, settingsFilePath);
         }
         return setDefaultValues(settings);

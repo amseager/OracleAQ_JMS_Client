@@ -2,12 +2,16 @@ package com.company;
 
 import com.company.Forms.ClientForm;
 import oracle.jms.AQjmsSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AsyncConsumer extends Thread implements MessageListener {
+    private static final Logger log = LoggerFactory.getLogger(AsyncConsumer.class);
+
     private AQjmsSession session;
     private String userName;
     private String queueName;
@@ -30,9 +34,9 @@ public class AsyncConsumer extends Thread implements MessageListener {
                 ClientForm.getForm().appendConsumerOutputIfRowIsSelected(this.getName(), txtMessage);
 //                ClientForm.getForm().refreshBrowser(txtMessage);
                 session.commit();
-                System.out.println(this.getName() + " Message received: " + txtMessage);
+                log.debug(this.getName() + " Message received: " + txtMessage);
             } else {
-                System.out.println("Invalid message received.");
+                log.error("Invalid message received.");
             }
         } catch (JMSException e) {
             e.printStackTrace();

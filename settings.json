@@ -10,7 +10,7 @@
   "defaultPassword": "jmsuser",
   "queueTable": "sample_aqtbl",
   "queueName": "sample_aq",
-  "sendCount": 1000,
-  "threadsCount": 1,
+  "sendCount": 10,
+  "threadsCount": 3,
   "threadLatency": 100
 }

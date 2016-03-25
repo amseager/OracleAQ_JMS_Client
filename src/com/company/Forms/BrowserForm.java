@@ -2,6 +2,8 @@ package com.company.Forms;
 
 import com.company.OJMSClient;
 import oracle.jms.AQjmsSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,12 +12,14 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 public class BrowserForm extends JDialog {
+    private static final Logger log = LoggerFactory.getLogger(BrowserForm.class);
+
     private JPanel contentPane;
     private JTextArea txaBrowser;
     private JLabel lblTotalRows;
     private JScrollPane scrBrowser;
 
-    public BrowserForm(AQjmsSession session, String userName, String queueName) {
+    BrowserForm(AQjmsSession session, String userName, String queueName) {
         setContentPane(contentPane);
         setModal(true);
         setAlwaysOnTop(true);

@@ -1,5 +1,8 @@
 package com.company.Forms;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.event.*;
 import java.sql.Connection;
@@ -9,6 +12,8 @@ import java.util.Locale;
 import java.util.Properties;
 
 public class SysPasswordForm extends JDialog {
+    private static final Logger log = LoggerFactory.getLogger(SysPasswordForm.class);
+
     private JPanel contentPane;
     private JButton btnOK;
     private JButton btnCancel;
@@ -21,7 +26,7 @@ public class SysPasswordForm extends JDialog {
     private String port;
     private String driver;
 
-    public SysPasswordForm(String host, String sid, String port, String driver) {
+    SysPasswordForm(String host, String sid, String port, String driver) {
         this.host = host;
         this.sid = sid;
         this.port = port;
@@ -79,7 +84,7 @@ public class SysPasswordForm extends JDialog {
     private void onOK() {
         try {
             Connection sysConnection = connectAsSys(String.valueOf(txtSysPassword.getPassword()));
-            System.out.println("Connected as SYS");
+            log.info("Connected as SYS");
             dispose();
             new NewUserForm(sysConnection);
         } catch (SQLException e) {

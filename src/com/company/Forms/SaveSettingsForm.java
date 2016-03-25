@@ -1,16 +1,21 @@
 package com.company.Forms;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.event.*;
 
 public class SaveSettingsForm extends JDialog {
+    private static final Logger log = LoggerFactory.getLogger(SaveSettingsForm.class);
+
     private JPanel contentPane;
     private JButton btnYes;
     private JButton btnCancel;
     private JButton btnNo;
     private JLabel lblSaveSettings;
 
-    public SaveSettingsForm(ClientForm clientForm, JFrame frame) {
+    SaveSettingsForm(ClientForm clientForm, JFrame frame) {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(btnYes);

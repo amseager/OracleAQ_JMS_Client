@@ -2,6 +2,8 @@ package com.company;
 
 import com.company.Forms.ClientForm;
 import oracle.jms.AQjmsSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
@@ -10,6 +12,8 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Sender implements Runnable {
+    private static final Logger log = LoggerFactory.getLogger(Sender.class);
+
     private AQjmsSession session;
     private MessageProducer producer;
     private AtomicInteger msgNumber;
@@ -32,7 +36,7 @@ public class Sender implements Runnable {
                 TextMessage message = session.createTextMessage(txtMessage);
                 message.setStringProperty("SOAPAction", "getQuote");
                 producer.send(message);
-                System.out.println("Sent message = " + message.getText());
+                log.debug("Sent message = " + message.getText());
                 msgList.add(txtMessage);
             }
             session.commit();

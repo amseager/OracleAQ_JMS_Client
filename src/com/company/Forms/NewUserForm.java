@@ -1,5 +1,8 @@
 package com.company.Forms;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.event.*;
 import java.sql.Connection;
@@ -7,6 +10,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class NewUserForm extends JDialog {
+    private static final Logger log = LoggerFactory.getLogger(NewUserForm.class);
+
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
@@ -17,7 +22,7 @@ public class NewUserForm extends JDialog {
 
     private Connection sysConnection;
 
-    public NewUserForm(Connection sysConnection) {
+    NewUserForm(Connection sysConnection) {
         this.sysConnection = sysConnection;
 
         setContentPane(contentPane);
